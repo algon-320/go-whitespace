@@ -61,37 +61,37 @@ func parse(code string) []*Command {
 		}
 	}
 
+	cur := trieRoot
 	for i := 0; i < len(codeST); i++ {
-		tmp += string(codeST[i])
-		for _, v := range InstructionList {
-			if tmp == v.Imp() {
-				cmd := &Command{ins: v, param: -1}
-				if v.ParamType() != NoParam {
-					str := ""
-					i++
-					for codeST[i] != 'L' {
-						str += string(codeST[i])
-						i++
-					}
-					if v.ParamType() == Number {
-						cmd.param = parseNum(str)
-					} else {
-						cmd.param = labelToNum(str)
-					}
-				}
-				if v.Name() == "DefineLabel" {
-					labels[cmd.param] = len(ret)
-				} else {
-					ret = append(ret, cmd)
-				}
-				tmp = ""
-				break
-			}
+		next := cur.Find(codeST[i])
+		if next == nil {
+			fmt.Fprintln(os.Stderr, fmt.Errorf("[error] `%s` unknown instruction was found", tmp))
+			os.Exit(1)
 		}
-	}
-	if len(tmp) > 0 {
-		fmt.Fprintln(os.Stderr, fmt.Errorf("[error] `%s` unknown instruction was found", tmp))
-		os.Exit(1)
+		cur = next
+
+		if cur.ins != nil {
+			cmd := &Command{ins: cur.ins, param: -1}
+			if cur.ins.ParamType() != NoParam {
+				str := ""
+				i++
+				for codeST[i] != 'L' {
+					str += string(codeST[i])
+					i++
+				}
+				if cur.ins.ParamType() == Number {
+					cmd.param = parseNum(str)
+				} else {
+					cmd.param = labelToNum(str)
+				}
+			}
+			if cur.ins.Name() == "DefineLabel" {
+				labels[cmd.param] = len(ret)
+			} else {
+				ret = append(ret, cmd)
+			}
+			cur = trieRoot
+		}
 	}
 	return ret
 }
@@ -136,9 +136,11 @@ func init() {
 }
 
 func main() {
+	initTrie()
+
 	commandDump := true
 
-	data, err := ioutil.ReadFile(`examples/hworld.ws`)
+	data, err := ioutil.ReadFile(`examples/hwrold.ws`)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
