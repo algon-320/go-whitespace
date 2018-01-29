@@ -140,7 +140,7 @@ func main() {
 
 	commandDump := true
 
-	data, err := ioutil.ReadFile(`examples/hwrold.ws`)
+	data, err := ioutil.ReadFile(`examples/hworld.ws`)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
